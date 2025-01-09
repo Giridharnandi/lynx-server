@@ -54,7 +54,7 @@ export default function Dashboard() {
         createdAt: new Date()
       });
       await loadApiKeys();
-      setActiveLink(`https://${currentUser.email?.split('@')[0]}.lynx-seven.vercel.app:3000`);
+      setActiveLink(`https://lynx-seven.vercel.app:3000`);
     } catch (error) {
       console.error('Error generating API key:', error);
     }
