@@ -148,7 +148,7 @@ export default function Dashboard() {
                   </p>
                   <div className="mt-2">
                     <code className="block rounded bg-gray-100 p-2">
-                      npx @lynx/cli start --key {apiKeys[0]?.key}
+                      npx @lynx-glopx/cli start --key {apiKeys[0]?.key}
                     </code>
                   </div>
                 </div>
