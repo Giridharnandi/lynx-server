@@ -31,7 +31,7 @@ app.use(rateLimit({
 }));
 
 // Generate self-signed certificate
-const attrs = [{ name: 'commonName', value: '*.lynx.dev' }];
+const attrs = [{ name: 'commonName', value: '*.lynx-seven.vercel.app' }];
 const pems = selfsigned.generate(attrs, {
   algorithm: 'sha256',
   days: 365,
@@ -100,7 +100,7 @@ app.post('/api/tunnel/start', verifyApiKey, async (req, res) => {
       });
 
       res.json({
-        url: `https://${subdomain}.lynx.dev:${tunnelPort}`,
+        url: `https://${subdomain}.lynx-seven.vercel.app:${tunnelPort}`,
         tunnelId
       });
     });
