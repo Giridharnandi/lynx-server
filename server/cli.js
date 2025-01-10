@@ -6,7 +6,7 @@ export async function startTunnel(options) {
   const spinner = ora('Starting HTTPS tunnel...').start();
 
   try {
-    const response = await axios.post('http://localhost:4000/api/tunnel/start', {
+    const response = await axios.post('http://lynx-seven.vercel.app/api/tunnel/start', {
       port: options.port
     }, {
       headers: {
@@ -34,7 +34,7 @@ export async function startTunnel(options) {
 async function stopTunnel(tunnelId, apiKey, spinner) {
   spinner.start('Stopping tunnel...');
   try {
-    await axios.post('http://localhost:4000/api/tunnel/stop', {
+    await axios.post('http://lynx-seven.vercel.app/api/tunnel/stop', {
       tunnelId
     }, {
       headers: {
