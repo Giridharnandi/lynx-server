@@ -1,197 +1,237 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { Copy, RefreshCw } from 'lucide-react';
-import Button from '../components/ui/Button';
+import { Copy, RefreshCw, Terminal, Key, Trash2, FileJson } from 'lucide-react';
+import Button from "../components/ui/Button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { toast } from "react-hot-toast";
 
 interface ApiKey {
   id: string;
   key: string;
   createdAt: Date;
+  port: number;
+  status: 'running' | 'stopped';
 }
 
 export default function Dashboard() {
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showLoadingContainer, setShowLoadingContainer] = useState(false);
 
   useEffect(() => {
-    if (!currentUser) {
-      navigate('/login');
-      return;
-    }
-    loadApiKeys();
-  }, [currentUser, navigate]);
-
-  async function loadApiKeys() {
-    if (!currentUser) return;
-    
-    const q = query(collection(db, 'apiKeys'), where('userId', '==', currentUser.uid));
-    const querySnapshot = await getDocs(q);
-    const keys: ApiKey[] = [];
-    querySnapshot.forEach((doc) => {
-      keys.push({
-        id: doc.id,
-        ...doc.data()
-      } as ApiKey);
-    });
-    setApiKeys(keys);
-  }
+    const mockData: ApiKey[] = [
+      { id: '1', key: crypto.randomUUID(), createdAt: new Date(), port: 3000, status: 'running' }
+    ];
+    setApiKeys(mockData);
+  }, []);
 
   async function generateApiKey() {
-    if (!currentUser) return;
-    
     setIsGenerating(true);
+    setShowLoadingContainer(true);
+
     try {
-      const key = crypto.randomUUID();
-      await addDoc(collection(db, 'apiKeys'), {
-        userId: currentUser.uid,
-        key,
-        createdAt: new Date()
-      });
-      await loadApiKeys();
+      // Show loading container for 3 seconds
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const newKey: ApiKey = {
+        id: crypto.randomUUID(),
+        key: crypto.randomUUID(),
+        createdAt: new Date(),
+        port: 3000 + apiKeys.length,
+        status: 'running'
+      };
+      setApiKeys([...apiKeys, newKey]);
+      toast.success("New API key generated successfully");
     } catch (error) {
+      toast.error("Failed to generate API key");
       console.error('Error generating API key:', error);
+    } finally {
+      setIsGenerating(false);
+      setShowLoadingContainer(false);
     }
-    setIsGenerating(false);
   }
 
-  async function copyToClipboard(text: string) {
+  async function copyToClipboard(text: string, message: string = "Copied to clipboard!") {
     try {
       await navigator.clipboard.writeText(text);
+      toast.success(message);
     } catch (err) {
+      toast.error("Failed to copy to clipboard");
       console.error('Failed to copy text:', err);
     }
   }
 
-  function getCliCommand(apiKey: string) {
-    return `npx @lynx-glopx/cli start --key ${apiKey}`;
+  async function deleteApiKey(id: string) {
+    try {
+      setApiKeys(apiKeys.filter(apiKey => apiKey.id !== id));
+      toast.success("API key deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete API key");
+      console.error('Error deleting API key:', error);
+    }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="border-b border-gray-200 pb-5">
-            <h3 className="text-2xl font-semibold leading-6 text-gray-900">Dashboard</h3>
-          </div>
+  const jsondocs = `{
+    "scripts": {
+      "build": "next build",
+      "prepublishOnly": "npm run build",
+      "test": "echo 'No tests yet' && exit 0",
+      "lint": "eslint .",
+      "dev": "next dev",
+      "start": "next start"
+    }
+  }`;
 
-          <div className="mt-6">
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-lg font-medium text-gray-900">API Keys</h4>
-                <p className="mt-1 text-sm text-gray-500">
-                  Generate an API key to connect your local development server to Lynx.
-                </p>
-                <div className="mt-4">
-                  <Button
-                    onClick={generateApiKey}
-                    isLoading={isGenerating}
-                    className="flex items-center"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Generate New API Key
-                  </Button>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <Card className="border-gray-800 bg-gray-900/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent">
+              Developer Dashboard
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Manage your Local Port Access keys and get started with local development, LPA keys are used to access your local server from the internet to make it more secure the keys will get refreshed and ported to the same port number as the previous key.<br/>
+              The HTTPS sever can only run under the same local network.<br/>
+              {showLoadingContainer && (
+                <div className="text-center mt-4">
+                  <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-yellow-500 mx-auto"></div>
+                  <h2 className="text-white mt-4">Running...</h2>
+                  <p className="text-zinc-400">Creating tunnel to localhost:3000</p>
                 </div>
+              )}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-8">
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-200">LPA Keys</h2>
+                  <p className="text-sm text-gray-400">Generate and manage your API keys</p>
+                </div>
+                <Button
+                  onClick={generateApiKey}
+                  disabled={isGenerating}
+                  className="bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                  Generate LPA Key
+                </Button>
               </div>
 
               {apiKeys.length > 0 && (
-                <div className="mt-6">
-                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-300">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">API Key</th>
-                          <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
-                          <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                            <span className="sr-only">Actions</span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {apiKeys.map((apiKey) => (
-                          <tr key={apiKey.id}>
-                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
-                              {apiKey.key}
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {new Date(apiKey.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
-                              <button
-                                onClick={() => copyToClipboard(apiKey.key)}
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                <Card className="border-gray-800 bg-black/50">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-gray-800">
+                        <TableHead className="text-gray-400">LPA Key</TableHead>
+                        <TableHead className="text-gray-400">Created</TableHead>
+                        <TableHead className="text-gray-400">Port</TableHead>
+                        <TableHead className="text-gray-400">Status</TableHead>
+                        <TableHead className="text-right text-gray-400">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {apiKeys.map((apiKey) => (
+                        <TableRow key={apiKey.id} className="border-gray-800">
+                          <TableCell className="font-mono text-gray-300">{apiKey.key}</TableCell>
+                          <TableCell className="text-gray-400">
+                            {new Date(apiKey.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-gray-400">{apiKey.port}</TableCell>
+                          <TableCell className="text-gray-200">
+                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${apiKey.status === 'running' ? 'bg-green-700' : 'bg-red-700'}`}>
+                              {apiKey.status}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right flex space-x-2 justify-end">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => copyToClipboard(apiKey.key, "API key copied!")}
+                              className="hover:bg-gray-800 bg-transparent text-white"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant='secondary'
+                              onClick={() => deleteApiKey(apiKey.id)}
+                              className="hover:bg-red-800 bg-transparent text-white"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              )}
+            </section>
 
-                  <div className="mt-6 space-y-4">
-                    <div>
-                      <h4 className="text-lg font-medium text-gray-900">Quick Start</h4>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Follow these steps to start your local development server with HTTPS:
-                      </p>
-                      
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">1. Install the Lynx CLI globally:</p>
-                          <code className="mt-2 block rounded bg-gray-100 p-2">
-                            npm install -g @lynx-glopx/cli
+            <section className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-200">Quick Start Guide</h2>
+              <div className="grid gap-4">
+                {[
+                  {
+                    step: 1,
+                    title: "Install the CLI",
+                    command: "npm install -g @lynx-glopx/cli",
+                    icon: Terminal
+                  },
+                  {
+                    step: 2,
+                    title: "Initialize Lynx",
+                    command: `npx @lynx-glopx/cli start --port 3000 --project-dir path-to-project`,
+                    icon: RefreshCw
+                  },
+                  {
+                    step: 3,
+                    title: "Navigate",
+                    command: `https://localhost:3001`,
+                    icon: Key
+                  },
+                  {
+                    step: 4,
+                    title: "Example package.json scripts React/Next JS",
+                    command: jsondocs,
+                    icon: FileJson
+                  }
+                ].map((item) => (
+                  <Card key={item.step} className="border-gray-800 bg-black/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="rounded-full bg-gray-800 p-2">
+                          <item.icon className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-200">
+                              Step {item.step}: {item.title}
+                            </h3>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => copyToClipboard(item.command)}
+                              className="hover:bg-gray-800 bg-transparent text-white"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <code className="block rounded bg-gray-800/50 p-2 text-sm text-gray-300">
+                            {item.command}
                           </code>
                         </div>
-
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">2. Start your local development server (e.g., npm run dev)</p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">3. In a new terminal, run the Lynx CLI:</p>
-                          <div className="mt-2 flex items-center gap-2">
-                            <code className="flex-1 rounded bg-gray-100 p-2">
-                              {getCliCommand(apiKeys[0]?.key)}
-                            </code>
-                            <button
-                              onClick={() => copyToClipboard(getCliCommand(apiKeys[0]?.key))}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Copy command"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">4. Your local server will be available at:</p>
-                          <div className="mt-2 flex items-center gap-2">
-                            <code className="flex-1 rounded bg-gray-100 p-2">
-                              https://lynx-seven.vercel.app:3000
-                            </code>
-                            <button
-                              onClick={() => copyToClipboard('https://lynx-seven.vercel.app:3000')}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Copy URL"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

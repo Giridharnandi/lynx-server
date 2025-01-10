@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Terminal } from 'lucide-react';
+import { ServerCrash } from 'lucide-react';
 import Button from './ui/Button';
 
 export default function Navbar() {
@@ -23,8 +23,8 @@ export default function Navbar() {
         <div className="flex h-16 justify-between">
           <div className="flex">
             <Link to="/" className="flex items-center">
-              <Terminal className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">Lynx</span>
+              <ServerCrash className="h-8 w-8 text-black" />
+              <span className="ml-2 text-xl font-bold text-purple-900"><span className='text-gray-700'>Lyn</span>X</span>
             </Link>
           </div>
 

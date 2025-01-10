@@ -56,7 +56,29 @@ export default function Home() {
                   <p className="flex-auto">Your development server stays private, accessible only on your local network.</p>
                 </dd>
               </div>
+
             </dl>
+            <div className="flex flex-col gap-2 w-60 sm:w-72 text-[10px] sm:text-xs z-50 justify-center">
+  <div
+    className="error-alert cursor-default flex items-center justify-between w-full h-12 sm:h-14 rounded-lg bg-[#232531] px-[10px]"
+  >
+    <div className="flex gap-2">
+      <div className="text-[#5c93e1] bg-white/5 backdrop-blur-xl p-1 rounded-lg">
+      <span className='text-purple-600'>G</span>lop
+      </div>
+      <div>
+        <p className="text-white">Powered by Glop</p>
+        <p className="text-gray-500">All rights reserved</p>
+      </div>
+    </div>
+    <button
+      className="text-gray-600 hover:bg-white/10 p-1 rounded-md transition-colors ease-linear"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-thumbs-up"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+    </button>
+  </div>
+</div>
+
           </div>
         </div>
       </div>
