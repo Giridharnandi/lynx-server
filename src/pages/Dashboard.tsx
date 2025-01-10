@@ -3,7 +3,7 @@ import { Copy, RefreshCw, Terminal, Key, Trash2, FileJson } from 'lucide-react';
 import Button from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { toast } from "react-hot-toast";
+import {toast, Toaster} from "react-hot-toast";
 
 interface ApiKey {
   id: string;
@@ -85,6 +85,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-8">
       <div className="max-w-7xl mx-auto space-y-8">
+        <Toaster/>
         <Card className="border-gray-800 bg-gray-900/50 backdrop-blur">
           <CardHeader>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-200 to-gray-400 bg-clip-text text-transparent">
