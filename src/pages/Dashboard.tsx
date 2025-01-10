@@ -16,7 +16,6 @@ export default function Dashboard() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [activeLink, setActiveLink] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -54,7 +53,6 @@ export default function Dashboard() {
         createdAt: new Date()
       });
       await loadApiKeys();
-      setActiveLink(`https://lynx-seven.vercel.app:3000`);
     } catch (error) {
       console.error('Error generating API key:', error);
     }
@@ -69,6 +67,10 @@ export default function Dashboard() {
     }
   }
 
+  function getCliCommand(apiKey: string) {
+    return `npx @lynx-glopx/cli start --key ${apiKey}`;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -81,6 +83,9 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div>
                 <h4 className="text-lg font-medium text-gray-900">API Keys</h4>
+                <p className="mt-1 text-sm text-gray-500">
+                  Generate an API key to connect your local development server to Lynx.
+                </p>
                 <div className="mt-4">
                   <Button
                     onClick={generateApiKey}
@@ -128,28 +133,59 @@ export default function Dashboard() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-              )}
 
-              {activeLink && (
-                <div className="mt-6">
-                  <h4 className="text-lg font-medium text-gray-900">Your HTTPS Link</h4>
-                  <div className="mt-2 flex items-center space-x-2">
-                    <code className="rounded bg-gray-100 px-2 py-1">{activeLink}</code>
-                    <button
-                      onClick={() => copyToClipboard(activeLink)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    To start the HTTPS tunnel, run this command in your terminal:
-                  </p>
-                  <div className="mt-2">
-                    <code className="block rounded bg-gray-100 p-2">
-                      npx @lynx-glopx/cli start --key {apiKeys[0]?.key}
-                    </code>
+                  <div className="mt-6 space-y-4">
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-900">Quick Start</h4>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Follow these steps to start your local development server with HTTPS:
+                      </p>
+                      
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">1. Install the Lynx CLI globally:</p>
+                          <code className="mt-2 block rounded bg-gray-100 p-2">
+                            npm install -g @lynx-glopx/cli
+                          </code>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">2. Start your local development server (e.g., npm run dev)</p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">3. In a new terminal, run the Lynx CLI:</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <code className="flex-1 rounded bg-gray-100 p-2">
+                              {getCliCommand(apiKeys[0]?.key)}
+                            </code>
+                            <button
+                              onClick={() => copyToClipboard(getCliCommand(apiKeys[0]?.key))}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Copy command"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">4. Your local server will be available at:</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <code className="flex-1 rounded bg-gray-100 p-2">
+                              https://lynx-seven.vercel.app:3000
+                            </code>
+                            <button
+                              onClick={() => copyToClipboard('https://lynx-seven.vercel.app:3000')}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Copy URL"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
