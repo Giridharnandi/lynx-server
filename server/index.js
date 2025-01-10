@@ -1,7 +1,6 @@
 import express from 'express';
 import https from 'https';
 import httpProxy from 'http-proxy';
-import selfsigned from 'selfsigned';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -26,17 +25,9 @@ const db = getFirestore();
 app.use(cors());
 app.use(express.json());
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100
 }));
-
-// Generate self-signed certificate
-const attrs = [{ name: 'commonName', value: '*.lynx-seven.vercel.app' }];
-const pems = selfsigned.generate(attrs, {
-  algorithm: 'sha256',
-  days: 365,
-  keySize: 2048
-});
 
 // Store active tunnels
 const activeTunnels = new Map();
@@ -71,38 +62,29 @@ app.post('/api/tunnel/start', verifyApiKey, async (req, res) => {
   const userId = req.userId;
 
   try {
-    const userDoc = await auth.getUser(userId);
-    const subdomain = userDoc.email.split('@')[0];
-    const tunnelId = `${subdomain}-${port}`;
+    const tunnelId = `tunnel-${userId}-${Date.now()}`;
 
-    if (activeTunnels.has(tunnelId)) {
-      return res.status(400).json({ error: 'Tunnel already exists' });
-    }
-
-    // Create HTTPS server for the tunnel
-    const server = https.createServer({
-      key: pems.private,
-      cert: pems.cert
-    }, (req, res) => {
-      proxy.web(req, res, {
-        target: `http://localhost:${port}`,
-        secure: false
-      });
+    // Create proxy to local server
+    const proxyServer = httpProxy.createProxyServer({
+      target: `http://localhost:${port}`,
+      ws: true
     });
 
-    server.listen(0, () => {
-      const tunnelPort = server.address().port;
-      activeTunnels.set(tunnelId, {
-        server,
-        port: tunnelPort,
-        targetPort: port,
-        userId
-      });
+    // Handle proxy errors
+    proxyServer.on('error', (err) => {
+      console.error('Proxy error:', err);
+    });
 
-      res.json({
-        url: `https://${subdomain}.lynx-seven.vercel.app:${tunnelPort}`,
-        tunnelId
-      });
+    // Store tunnel info
+    activeTunnels.set(tunnelId, {
+      proxy: proxyServer,
+      userId,
+      port
+    });
+
+    res.json({
+      url: `https://lynx-seven.vercel.app:3000`,
+      tunnelId
     });
   } catch (error) {
     console.error('Error starting tunnel:', error);
@@ -120,23 +102,22 @@ app.post('/api/tunnel/stop', verifyApiKey, async (req, res) => {
     return res.status(404).json({ error: 'Tunnel not found' });
   }
 
-  tunnel.server.close();
+  tunnel.proxy.close();
   activeTunnels.delete(tunnelId);
   res.json({ message: 'Tunnel stopped successfully' });
 });
 
-// Get tunnel status
-app.get('/api/tunnel/status', verifyApiKey, async (req, res) => {
-  const userId = req.userId;
-  const userTunnels = Array.from(activeTunnels.entries())
-    .filter(([_, tunnel]) => tunnel.userId === userId)
-    .map(([tunnelId, tunnel]) => ({
-      tunnelId,
-      targetPort: tunnel.targetPort,
-      status: 'active'
-    }));
+// Proxy all other requests to local server
+app.use('/', (req, res) => {
+  const host = req.headers.host;
+  const tunnelId = req.headers['x-tunnel-id'];
+  
+  const tunnel = activeTunnels.get(tunnelId);
+  if (!tunnel) {
+    return res.status(404).json({ error: 'Tunnel not found' });
+  }
 
-  res.json({ tunnels: userTunnels });
+  tunnel.proxy.web(req, res);
 });
 
 const PORT = process.env.PORT || 4000;
