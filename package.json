@@ -10,22 +10,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "clsx": "^2.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express-rate-limit": "^7.1.5",
+    "firebase": "^10.8.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
-    "firebase": "^10.8.1",
-    "@tailwindcss/forms": "^0.5.7",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express-rate-limit": "^7.1.5"
+    "react-toastify": "^11.0.2",
+    "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+    "@types/react-toastify": "^4.0.2",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "eslint": "^9.9.1",
